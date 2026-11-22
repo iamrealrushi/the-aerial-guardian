@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Aerial Guardian — Person Detection in Drone Videos</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --navy: #1b365d;
+      --blue: #2563eb;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --accent-bg: #eff6ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+    /* Sticky Nav */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1040px; margin: 0 auto; padding: 0.75rem 1.25rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+    }
+    .brand { font-weight: 700; color: var(--navy); text-decoration: none; font-size: 1rem; }
+    .nav-links { display: flex; gap: 1.1rem; flex-wrap: wrap; }
+    .nav-links a {
+      text-decoration: none; color: var(--muted); font-size: 0.9rem; font-weight: 500;
+    }
+    .nav-links a:hover { color: var(--blue); }
+
+    /* Hero */
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1b365d 60%, #1e40af 100%);
+      color: #fff; padding: 3.5rem 1.25rem 3rem; text-align: center;
+    }
+    .hero-inner { max-width: 920px; margin: 0 auto; }
+    .badge {
+      display: inline-block; padding: 0.3rem 0.85rem; border-radius: 999px;
+      background: rgba(147, 197, 253, 0.18); border: 1px solid rgba(147, 197, 253, 0.35);
+      color: #bfdbfe; font-size: 0.82rem; font-weight: 600; letter-spacing: 0.03em; margin-bottom: 1rem;
+    }
+    header h1 { font-size: clamp(1.9rem, 4vw, 2.75rem); line-height: 1.2; margin-bottom: 0.6rem; }
+    .subtitle { font-size: 1.08rem; color: #cbd5e1; max-width: 720px; margin: 0 auto 1.4rem; }
+    .authors { font-size: 0.96rem; color: #f1f5f9; margin-bottom: 0.35rem; }
+    .affil { font-size: 0.88rem; color: #94a3b8; margin-bottom: 1.6rem; }
+    .btn-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.7rem; }
+    .btn {
+      display: inline-block; padding: 0.58rem 1.15rem; border-radius: 8px;
+      text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.15s;
+    }
+    .btn-primary { background: #ffffff; color: var(--navy); }
+    .btn-primary:hover { background: #e2e8f0; }
+    .btn-outline { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+    .btn-outline:hover { background: rgba(255,255,255,0.2); }
+
+    /* Main Container */
+    main { max-width: 980px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+    /* KPI Strip */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1rem; margin: -2.2rem auto 2rem; position: relative; z-index: 10;
+    }
+    .kpi {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.15rem; text-align: center; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+    }
+    .kpi-val { font-size: 1.7rem; font-weight: 800; color: var(--navy); }
+    .kpi-lbl { font-size: 0.84rem; color: var(--muted); margin-top: 0.15rem; }
+    .kpi-sub { font-size: 0.78rem; color: var(--blue); font-weight: 600; margin-top: 0.2rem; }
+
+    /* Sections & Cards */
+    section {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.75rem; margin-bottom: 1.5rem;
+    }
+    h2 {
+      font-size: 1.35rem; color: var(--navy); border-bottom: 2px solid var(--border);
+      padding-bottom: 0.45rem; margin-bottom: 1rem;
+    }
+    h3 { font-size: 1.05rem; color: #1e40af; margin: 1.2rem 0 0.45rem; }
+    p { margin-bottom: 0.8rem; text-align: justify; }
+    ul { margin: 0.4rem 0 0.9rem 1.3rem; }
+    li { margin-bottom: 0.4rem; }
+
+    /* Equation Box */
+    .eq-box {
+      background: #f8fafc; border-left: 4px solid var(--blue); border-radius: 6px;
+      padding: 0.8rem 1rem; margin: 0.75rem 0; display: flex; justify-content: space-between;
+      align-items: center; gap: 1rem; font-family: "Cambria Math", Georgia, serif; font-size: 1rem;
+      overflow-x: auto;
+    }
+    .eq-num { color: var(--muted); font-family: inherit; font-weight: 700; font-size: 0.88rem; }
+
+    /* Pipeline Diagram */
+    .pipe-block { margin: 1rem 0; }
+    .pipe-title { font-size: 0.88rem; font-weight: 700; color: var(--navy); margin-bottom: 0.5rem; }
+    .pipe-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.65rem;
+    }
+    .pipe-step {
+      background: var(--accent-bg); border: 1px solid #bfdbfe; border-radius: 8px;
+      padding: 0.7rem; font-size: 0.83rem; text-align: center;
+    }
+    .pipe-step.highlight { background: #fff7ed; border-color: #fdba74; }
+    .pipe-step.out { background: #f0fdf4; border-color: #86efac; }
+    .pipe-step strong { display: block; color: var(--navy); margin-bottom: 0.2rem; }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; margin: 0.9rem 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--border); text-align: center; }
+    th:first-child, td:first-child { text-align: left; }
+    thead th { background: var(--navy); color: #fff; font-weight: 600; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody tr.hl { background: var(--accent-bg); font-weight: 700; color: var(--navy); }
+    .note { font-size: 0.82rem; color: var(--muted); font-style: italic; margin-top: 0.35rem; }
+
+    /* Charts */
+    .chart-card {
+      background: #ffffff; border: 1px solid var(--border); border-radius: 10px;
+      padding: 1rem; margin: 1rem 0;
+    }
+    .chart-box { position: relative; height: 300px; width: 100%; }
+    .fig-cap { text-align: center; font-size: 0.84rem; color: var(--muted); font-style: italic; margin-top: 0.6rem; }
+    .toggle-row { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .toggle-btn {
+      border: 1px solid var(--border); background: #f1f5f9; color: var(--text);
+      padding: 0.35rem 0.85rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.84rem;
+    }
+    .toggle-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+    /* Video & Media */
+    video { width: 100%; border-radius: 10px; border: 1px solid var(--border); background: #0f172a; }
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .media-card { border: 1px solid var(--border); border-radius: 10px; padding: 0.6rem; background: #f8fafc; text-align: center; }
+    .media-card img { width: 100%; border-radius: 6px; display: block; }
+
+    /* References & BibTeX */
+    .ref-list { list-style: none; margin-left: 0; font-size: 0.88rem; }
+    .ref-list li { padding-left: 2.1rem; text-indent: -2.1rem; margin-bottom: 0.45rem; }
+    pre {
+      background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 8px;
+      overflow-x: auto; font-size: 0.84rem; line-height: 1.5;
+    }
+    .copy-btn {
+      margin-top: 0.5rem; background: var(--navy); color: #fff; border: none;
+      padding: 0.45rem 0.9rem; border-radius: 6px; cursor: pointer; font-size: 0.84rem; font-weight: 600;
+    }
+    .copy-btn:hover { background: var(--blue); }
+
+    footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 1.5rem 1rem 2.5rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="brand" href="#">The Aerial Guardian</a>
+    <div class="nav-links">
+      <a href="#abstract">Abstract</a>
+      <a href="#intro">Intro</a>
+      <a href="#method">Methodology</a>
+      <a href="#setup">Setup</a>
+      <a href="#results">Results</a>
+      <a href="#demo">Demo</a>
+      <a href="#conclusion">Conclusion</a>
+      <a href="#references">References</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="hero-inner">
+    <div class="badge">EE5340: Video Analytics — Mini-Project | IIT Guwahati</div>
+    <h1>Person Detection in Drone Videos</h1>
+    <p class="subtitle">Solving Small-Object and Motion-Blurred Person Detection in Aerial Footage</p>
+    <p class="authors">
+      <strong>Rushikesh Waghmare</strong> (264152027) &nbsp;·&nbsp;
+      <strong>Hema M</strong> (264152006) &nbsp;·&nbsp;
+      <strong>Ishika Sonker</strong> (264152021)
+    </p>
+    <p class="affil">M.Tech in Robotics &amp; AI · Indian Institute of Technology Guwahati · Instructor: Prof. Prithwijit Guha</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="https://github.com/iamrealrushi/the-aerial-guardian" target="_blank">GitHub Repository</a>
+      <a class="btn btn-outline" href="#demo">Watch Demo</a>
+      <a class="btn btn-outline" href="#links">Slides &amp; Report</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- KPI Highlights -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-val">33.6%</div>
+      <div class="kpi-lbl">VisDrone-DET AP</div>
+      <div class="kpi-sub">+5.9 vs. Full-Frame @1280</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val">70.6%</div>
+      <div class="kpi-lbl">VisDrone-DET AP50</div>
+      <div class="kpi-sub">73.7% at maxDets = 500</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val">31.1%</div>
+      <div class="kpi-lbl">VisDrone-DET AP_small</div>
+      <div class="kpi-sub">+6.6 (+27% rel.) over Baseline</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val">0.14 s</div>
+      <div class="kpi-lbl">Sliced Inference / Image</div>
+      <div class="kpi-sub">~7.1 FPS on Tesla T4 (FP16)</div>
+    </div>
+  </div>
+
+  <!-- Abstract -->
+  <section id="abstract">
+    <h2>Abstract</h2>
+    <p>
+      People captured from drones are extremely small: in the VisDrone-DET validation set, <strong>89% of person boxes cover fewer than 32×32 pixels</strong> (median equivalent side 17 px), and drone videos add camera motion blur. This mini-project builds a frame-by-frame person detector (no tracking) tailored for aerial footage on a single free Tesla T4 GPU.
+    </p>
+    <p>
+      Our pipeline combines five practical ideas: (1) a YOLOv8s detector with an extra high-resolution P2 (stride-4) head, (2) matched 512×512 overlapping tiles upscaled 1.5× to 768 px for both training and testing, (3) a hybrid CIoU + Normalized Wasserstein Distance (NWD) box loss that handles tiny boxes smoothly, (4) box-level copy-paste of small persons plus drone-style degradations (motion blur, defocus, noise, exposure, JPEG), and (5) real video frames from VisDrone-VID during training.
+    </p>
+    <p>
+      On VisDrone-DET validation (548 images), sliced inference achieves <strong>33.6% AP, 70.6% AP50, and 31.1% AP_small</strong>, improving AP_small by <strong>+6.6 points (+27% relative)</strong> over a 1280 px full-frame pass with the same weights (27.7% AP / 24.5% AP_small). On 288 VisDrone-VID validation frames, it reaches 25.5% AP and 62.4% AP50, while confirming that motion-blurred video frames remain the main challenge (AP50 drops from 67.5% to 53.1%).
+    </p>
+  </section>
+
+  <!-- 1. Introduction -->
+  <section id="intro">
+    <h2>1. Introduction</h2>
+    <h3>1.1 Motivation</h3>
+    <p>
+      Drones provide a wide, low-cost bird's-eye view of streets, crowds, and open grounds, but detecting people from aerial altitude is much harder than in standard ground-level cameras. Human targets shrink to tiny regions—often 10 to 25 pixels wide. Standard detectors resize an entire high-resolution frame down to 640×640, shrinking these already tiny people until they disappear. Moving and vibrating drones also introduce motion blur and video compression artefacts. As Figure 1 shows, 83–89% of people in VisDrone-DET are COCO-small (area &lt; 32² px, equivalent square side √(wh) &lt; 32 px), with a median side of just 17 px.
+    </p>
+    <div class="chart-card">
+      <div class="chart-box"><canvas id="sizeChart"></canvas></div>
+      <div class="fig-cap">Figure 1: Share of COCO-small person boxes (√(wh) &lt; 32 px) and median box side across the VisDrone splits used.</div>
+    </div>
+
+    <h3>1.2 Applications</h3>
+    <ul>
+      <li><strong>Search and Rescue:</strong> Scanning large disaster zones, forests, or floodplains to spot small human figures quickly.</li>
+      <li><strong>Crowd Monitoring &amp; Public Safety:</strong> Estimating crowd density and movement in public events and urban areas without needing personal identities.</li>
+      <li><strong>Safe Drone Navigation:</strong> Helping autonomous drones detect nearby people for safe flight and landing.</li>
+    </ul>
+
+    <h3>1.3 Problem Statement</h3>
+    <p>
+      Given a single RGB drone image or video frame, detect all people as axis-aligned bounding boxes with confidence scores. We merge the VisDrone classes <em>pedestrian</em> and <em>people</em> into one class (<code>person</code>) and ignore official VisDrone ignored regions. Each frame is processed independently (no tracking or IDs). Performance is evaluated using official COCO metrics—especially <code>AP_small</code>—on VisDrone-DET and VisDrone-VID validation sets.
+    </p>
+
+    <h3>1.4 Contributions</h3>
+    <ul>
+      <li><strong>Train–Test Matched Tiling:</strong> Training and testing on the exact same 512×512 tile grid (25% overlap) zoomed 1.5× to 768 px, removing the train–test scale gap common in tiled inference.</li>
+      <li><strong>Small- &amp; Blurred-Person Training Recipe:</strong> Combining a YOLOv8s-P2 (stride-4) head, hybrid CIoU+NWD box loss, mask-free box-level copy-paste, drone degradation augmentations, and real VisDrone-VID frames in one T4-friendly pipeline.</li>
+      <li><strong>Memory-Safe Training Patch:</strong> Patching Ultralytics' label assigner to process crowded batches image-by-image so P2 training never runs out of GPU memory on a 15 GB T4.</li>
+      <li><strong>Comprehensive Evaluation &amp; Video Demo:</strong> Full COCO evaluation (standard <code>maxDets=100</code>, crowded <code>maxDets=500</code>, and blur-stratified splits) plus a demo video pipeline with blur-aware confidence thresholds.</li>
+    </ul>
+  </section>
+
+  <!-- 2. Literature Review -->
+  <section id="lit">
+    <h2>2. Brief Literature Review</h2>
+    <p>
+      Aerial benchmarks like VisDrone [1] highlight why standard object detectors struggle from above: objects are tiny, densely packed, and often blurred. One-stage detectors such as YOLOv8 [2] use Feature Pyramid Networks (FPN) [8] to detect objects at strides 8, 16, and 32, but coarse strides lose tiny pedestrians. Drone-focused variants like TPH-YOLOv5 [6] and YOLOv8-P2 [2] add a finer stride-4 (P2) head to preserve small-object details.
+    </p>
+    <p>
+      At inference time, Slicing Aided Hyper Inference (SAHI) [3] splits high-resolution images into overlapping tiles, detects on each tile, and merges boxes with NMS—boosting small-object AP significantly, especially when paired with sliced fine-tuning. For box regression, standard IoU and CIoU [9] drop sharply when a tiny box shifts by just 1–2 pixels. The Normalized Wasserstein Distance (NWD) [4] solves this by treating boxes as 2D Gaussians, giving smooth gradients regardless of box size. Finally, small-object copy-paste [7] gives the detector more tiny examples during training, while Laplacian variance [11] offers a fast, classical way to estimate image sharpness.
+    </p>
+  </section>
+
+  <!-- 3. Methodology -->
+  <section id="method">
+    <h2>3. Methodology</h2>
+    <p>Every stage of our training and inference pipeline is designed to keep tiny people visible while remaining fast enough to train on a free Google Colab T4 GPU (Figure 2).</p>
+
+    <div class="pipe-block">
+      <div class="pipe-title">A. Training Pipeline</div>
+      <div class="pipe-row">
+        <div class="pipe-step"><strong>1. Multi-Source Data</strong>DET-train + VID-train (stride 8); merge person; grey out ignored regions</div>
+        <div class="pipe-step"><strong>2. Matched Tiling</strong>512×512 tiles, 25% overlap; 16,000 tiles (10% empty)</div>
+        <div class="pipe-step"><strong>3. Box Copy-Paste</strong>Small persons (&le;48 px), p = 0.30, Gaussian feathering</div>
+        <div class="pipe-step"><strong>4. Drone Degradations</strong>Mosaic + motion blur, defocus, noise, exposure, JPEG</div>
+        <div class="pipe-step highlight"><strong>5. YOLOv8s-P2 + NWD</strong>768 px input (1.5× zoom), 0.5·CIoU + 0.5·NWD loss</div>
+      </div>
+    </div>
+    <div class="pipe-block">
+      <div class="pipe-title">B. Per-Frame Inference Pipeline (No Tracking)</div>
+      <div class="pipe-row">
+        <div class="pipe-step"><strong>1. Input Frame</strong>Drone image or video frame + Laplacian blur score</div>
+        <div class="pipe-step"><strong>2. Dual-Pass Slicing</strong>512×512 tiles @ 768 px + Full-frame pass @ 1280 px</div>
+        <div class="pipe-step highlight"><strong>3. YOLOv8s-P2 (FP16)</strong>Batched tile inference (bs = 16, conf &ge; 0.001)</div>
+        <div class="pipe-step"><strong>4. Border Trim &amp; NMS</strong>Drop interior border cuts (2 px), global NMS (IoU 0.6)</div>
+        <div class="pipe-step out"><strong>5. Adaptive Output</strong>COCO metrics &amp; demo video (conf 0.30 sharp / 0.20 blurry)</div>
+      </div>
+      <div class="fig-cap">Figure 2: End-to-end training pipeline (A) and per-frame sliced inference pipeline (B).</div>
+    </div>
+
+    <h3>3.1 Data Preparation &amp; Matched Tiling</h3>
+    <p>
+      VisDrone categories 1 (pedestrian) and 2 (people) are merged into a single <code>person</code> class. Ignored regions (category 0) are painted flat grey (value 114) during training so unannotated crowds are not treated as background; during evaluation, detections with &ge;50% area inside an ignored region are discarded. To avoid near-duplicate video frames, we sample every 8th frame from VisDrone-VID train (3,050 frames) and every 10th frame from VID val (288 frames).
+    </p>
+    <p>
+      Each training image is cut into native 512×512 tiles with 25% overlap (128 px overlap, stride 384 px) and upscaled 1.5× to 768×768 when fed into the network, turning a 17 px person into ~25 px. Using the exact same tile grid at test time removes train–test scale shift. We sample 16,000 training tiles (90% with people, 10% empty hard negatives) and 1,200 validation tiles for checkpoint selection.
+    </p>
+
+    <h3>3.2 Box-Level Copy-Paste &amp; Drone Augmentations</h3>
+    <p>
+      Because VisDrone has only bounding boxes (no masks), we implemented an offline box-level copy-paste module: small persons (side &le; 48 px) are cropped into a 3,000-patch donor pool and pasted onto 30% of training tiles (1–5 patches per tile) using smooth Gaussian edge blending—adding 14,317 extra small-person boxes (out of 94,932 total). Online after Mosaic, we also apply directional motion blur (p = 0.35, line kernels 3–13 px), Gaussian defocus (p = 0.12 if no motion blur), brightness/contrast jitter (p = 0.30), sensor noise (p = 0.15), and JPEG compression (p = 0.20, quality 40–90).
+    </p>
+
+    <h3>3.3 YOLOv8s-P2, Hybrid CIoU–NWD Loss &amp; Memory Patch</h3>
+    <p>
+      We use YOLOv8s-P2 (160 layers, 10.64M parameters, 36.9 GFLOPs), initialized from COCO-pretrained YOLOv8s weights (219/437 matching tensors transferred). The extra P2 head runs at stride 4 (192×192 feature map at 768 px input). For box regression, we blend CIoU [9] with Normalized Wasserstein Distance (NWD) [4] in network-input pixels:
+    </p>
+    <div class="eq-box">
+      <span>W<sub>2</sub><sup>2</sup>(a, b) = (c<sub>xa</sub> &minus; c<sub>xb</sub>)<sup>2</sup> + (c<sub>ya</sub> &minus; c<sub>yb</sub>)<sup>2</sup> + [(w<sub>a</sub> &minus; w<sub>b</sub>)<sup>2</sup> + (h<sub>a</sub> &minus; h<sub>b</sub>)<sup>2</sup>] / 4</span>
+      <span class="eq-num">(1)</span>
+    </div>
+    <div class="eq-box">
+      <span>NWD(a, b) = exp(&minus;&radic;(W<sub>2</sub><sup>2</sup> + &epsilon;) / C), &nbsp;&nbsp; L<sub>box</sub> = 1 &minus; (0.5 &middot; CIoU + 0.5 &middot; NWD), &nbsp;&nbsp; C = 12.8 px</span>
+      <span class="eq-num">(2)</span>
+    </div>
+    <p>
+      Because P2 adds ~37,000 anchors, crowded tiles caused GPU out-of-memory crashes during label assignment. We patched <code>TaskAlignedAssigner</code> to match images one-by-one whenever <code>batch &times; max_boxes &gt; 800</code> (verified bit-exact via unit self-test), keeping VRAM under 5 GB.
+    </p>
+
+    <h3>3.4 Sliced Inference &amp; Blur-Aware Video Thresholding</h3>
+    <p>
+      At test time, each frame is sliced into the same 512×512 grid (8 tiles for a 1344×756 video frame), run in FP16 batches of 16 at 768 px, and stripped of boxes within 2 px of an interior tile edge. One full-frame pass at 1280 px (keeping boxes with &radic;area &ge; 28 px) captures large foreground persons before global NMS (IoU = 0.6, max 500 boxes). For video output, sharpness is scored via Laplacian variance on a 960 px normalized grayscale frame:
+    </p>
+    <div class="eq-box">
+      <span>B(I) = Var(&nabla;<sup>2</sup> I<sub>960</sub>), &nbsp;&nbsp; conf cutoff = 0.20 if B(I) &lt; 554.7 else 0.30</span>
+      <span class="eq-num">(3)</span>
+    </div>
+  </section>
+
+  <!-- 4. Experimental Setup -->
+  <section id="setup">
+    <h2>4. Experimental Setup</h2>
+    <h3>4.1 Datasets &amp; Baseline</h3>
+    <p>
+      We use VisDrone2019-DET and VisDrone2019-VID [1] (Table 1). Our baseline is single-pass full-frame inference at 1280 px using the exact same trained weights (<code>DET_fullframe_1280</code>), directly isolating the gain of sliced inference.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Dataset Split</th><th>Frames Used</th><th>Person Boxes</th><th>COCO-Small (&lt;32 px)</th><th>Median Side &radic;(wh)</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>DET train</td><td>6,471</td><td>106,396</td><td>83%</td><td>17 px</td><td>Training tiles</td></tr>
+          <tr><td>VID train (stride 8)</td><td>3,050</td><td>41,594</td><td>39%</td><td>36 px</td><td>Training tiles</td></tr>
+          <tr class="hl"><td>DET val</td><td>548</td><td>13,969</td><td>89%</td><td>17 px</td><td>Val tiles &amp; Evaluation</td></tr>
+          <tr class="hl"><td>VID val (stride 10)</td><td>288</td><td>5,096</td><td>25%</td><td>47 px</td><td>Video Eval &amp; Blur Thr</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>4.2 Platform &amp; Key Settings</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Component</th><th>Setting</th><th>Component</th><th>Setting</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Hardware</td><td>Colab Tesla T4 (15 GB), 12.7 GB RAM</td><td>Software</td><td>Ultralytics 8.3.253, PyTorch 2.11, Python 3.13</td></tr>
+          <tr><td>Model</td><td>YOLOv8s-P2 (1 class, COCO init)</td><td>Tiling</td><td>512×512 tiles, 25% overlap, 768 px input (1.5×)</td></tr>
+          <tr><td>Optimizer</td><td>AdamW (auto), lr = 0.002, mom = 0.9</td><td>Schedule</td><td>30 epochs planned, batch 8, cosine LR, AMP</td></tr>
+          <tr><td>Box Loss</td><td>0.5·CIoU + 0.5·NWD (C = 12.8 px)</td><td>Augmentation</td><td>Mosaic (off last 3 ep), Copy-Paste 0.3, Degradations</td></tr>
+          <tr><td>Inference</td><td>Tiles @ 768 + Full @ 1280, NMS 0.6</td><td>Metrics</td><td>COCO AP, AP50, AP75, AP_S/M/L (maxDets 100 &amp; 500)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 5. Results -->
+  <section id="results">
+    <h2>5. Results</h2>
+    <h3>5.1 Training Progress</h3>
+    <p>
+      Validation metrics on the 1,200 validation tiles rose steadily over the 26 completed epochs in the saved log (~11 min/epoch; log stopped mid-epoch 27 of 30, and evaluation uses the saved <code>best.pt</code>). Validation mAP50 climbed from 0.430 (epoch 1) to 0.700 (epoch 26), and mAP50–95 peaked at <strong>0.331 at epoch 23</strong> (Precision 0.790, Recall 0.601).
+    </p>
+    <div class="chart-card">
+      <div class="chart-box"><canvas id="trainChart"></canvas></div>
+      <div class="fig-cap">Figure 3: Validation Precision, Recall, mAP50, and mAP50–95 across epochs 1–26 on 1,200 validation tiles.</div>
+    </div>
+
+    <h3>5.2 Quantitative Results: Slicing vs. Full-Frame &amp; Video</h3>
+    <p>
+      On DET val (<code>maxDets = 100</code>), sliced inference lifts <code>AP_small</code> by <strong>+6.6 points (+27% relative)</strong> and <code>AP75</code> by +7.1 points, while keeping <code>AP_large</code> nearly unchanged (&minus;0.8) via the 1280 px macro pass. Raising <code>maxDets</code> to 500 for crowded scenes boosts DET sliced AP50 to <strong>73.7%</strong> and AP_small to <strong>32.5%</strong>.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Evaluation Setting</th><th>maxDets</th><th>AP (%)</th><th>AP50 (%)</th><th>AP75 (%)</th><th>AP_S (%)</th><th>AP_M (%)</th><th>AP_L (%)</th></tr>
+        </thead>
+        <tbody>
+          <tr class="hl"><td>DET val — Sliced (Ours)</td><td>100</td><td>33.6</td><td>70.6</td><td>26.4</td><td>31.1</td><td>49.8</td><td>71.6</td></tr>
+          <tr><td>DET val — Full-frame @1280 (Baseline)</td><td>100</td><td>27.7</td><td>62.2</td><td>19.3</td><td>24.5</td><td>48.1</td><td>72.5</td></tr>
+          <tr class="hl"><td>Gain (Sliced &minus; Full-frame)</td><td>100</td><td>+5.9</td><td>+8.4</td><td>+7.1</td><td>+6.6</td><td>+1.7</td><td>&minus;0.8</td></tr>
+          <tr><td>DET val — Sliced (Crowded)</td><td>500</td><td>n/a*</td><td>73.7</td><td>27.1</td><td>32.5</td><td>50.6</td><td>71.6</td></tr>
+          <tr class="hl"><td>VID val — Sliced (Ours)</td><td>100</td><td>25.5</td><td>62.4</td><td>16.1</td><td>7.0</td><td>31.1</td><td>40.8</td></tr>
+          <tr><td>VID val — Sliced (Crowded)</td><td>500</td><td>n/a*</td><td>63.0</td><td>16.2</td><td>7.2</td><td>31.8</td><td>41.3</td></tr>
+        </tbody>
+      </table>
+      <p class="note">*n/a: pycocotools outputs &minus;1 (not computed) for overall AP when maxDets is changed from 100 to 500.</p>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-box"><canvas id="cocoChart"></canvas></div>
+      <div class="fig-cap">Figure 4: COCO metrics (maxDets = 100) comparing sliced inference vs. full-frame @1280 on DET val and sliced inference on VID val.</div>
+    </div>
+
+    <h3>5.3 Effect of Motion Blur (Blurriest 25% vs. Sharper 75%)</h3>
+    <p>
+      On VisDrone-VID (real drone video), motion blur clearly hurts performance: AP50 drops from <strong>67.5% to 53.1%</strong> and AP_small falls from <strong>8.7% to 3.1%</strong>. On VisDrone-DET still photos, the lowest-variance quarter scores slightly higher (78.1% vs. 72.6% AP50), likely because low Laplacian variance in sharp still images often reflects smooth, uncluttered backgrounds rather than motion blur.
+    </p>
+    <div class="chart-card">
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="btnAp50" onclick="setBlurMetric('ap50')">Show AP50 (%)</button>
+        <button class="toggle-btn" id="btnAps" onclick="setBlurMetric('aps')">Show AP_small (%)</button>
+      </div>
+      <div class="chart-box"><canvas id="blurChart"></canvas></div>
+      <div class="fig-cap">Figure 5: Blur-stratified evaluation (Blurriest 25% vs. Sharper 75% frames, maxDets = 500).</div>
+    </div>
+
+    <h3 id="demo">5.4 Qualitative Video Demo &amp; Run Time</h3>
+    <p>
+      We evaluated the detector on a 150-frame clip (6 s at 25 fps, 1344×756) from VisDrone-VID val (<code>demo_out.mp4</code>), producing 5,434 boxes (mean 36.2 persons/frame, range 30–44, mean confidence 0.65, 19.7% COCO-small; 0/150 frames flagged blurry). On a Tesla T4, sliced inference averaged <strong>0.14 s/image (~7.1 fps)</strong> on DET val, and end-to-end video processing took 39 s (<strong>~0.26 s/frame or 3.8 fps</strong>).
+    </p>
+    <video controls playsinline muted>
+      <source src="assets/demo_out.mp4" type="video/mp4" />
+      Upload <code>demo_out.mp4</code> to <code>assets/demo_out.mp4</code> in your repository to enable playback.
+    </video>
+    <div class="fig-cap">Demo output: VisDrone-VID validation sequence (150 frames, 1344×756, 25 fps, green boxes = sharp frames, conf &ge; 0.30).</div>
+
+    <h3>5.5 Key Takeaways, Failure Cases &amp; Limitations</h3>
+    <ul>
+      <li><strong>Slicing works well for tiny people:</strong> Matched slicing gives the clearest gain (+6.6 AP_small), though our baseline compares inference modes on the same tile-trained weights rather than a separately trained 1280 px model.</li>
+      <li><strong>Tight localization is hard on tiny boxes:</strong> AP50 (70.6%) is much higher than AP75 (26.4%) because a 2-pixel shift on a 17 px box drops IoU below 0.79.</li>
+      <li><strong>Video &amp; motion blur remain weak spots:</strong> AP_small drops from 31.1% (DET) to 7.0% (VID) and 3.1% on blurry VID frames due to real motion blur, video compression, and fewer VID training frames.</li>
+      <li><strong>Limitations:</strong> All training components were enabled together in one run (seed 0), so individual component ablations are left for future work. Tightly overlapping crowds, frame edges, and frame-to-frame flicker (no tracking) remain visible failure points.</li>
+    </ul>
+  </section>
+
+  <!-- 6. Conclusion -->
+  <section id="conclusion">
+    <h2>6. Conclusion &amp; Future Work</h2>
+    <p>
+      We built a practical, T4-trainable person detector for drone imagery by combining YOLOv8s-P2, matched 512×512 tiling upscaled 1.5× to 768 px, hybrid CIoU–NWD box loss, box-level copy-paste, drone degradations, and real video frames. On VisDrone-DET val, it reaches <strong>33.6% AP, 70.6% AP50, and 31.1% AP_small</strong> (+6.6 AP_small over a 1280 px full-frame pass), and generalizes to crowded aerial video at <strong>62.4% AP50</strong> on VisDrone-VID val.
+    </p>
+    <ul>
+      <li><strong>Component Ablations:</strong> Train separate baselines (plain YOLOv8s, without P2, without NWD) to isolate each component's exact impact.</li>
+      <li><strong>Temporal Tracking:</strong> Pair with a lightweight tracker (e.g., ByteTrack) to smooth flicker and recover people during brief motion blur.</li>
+      <li><strong>Faster Inference:</strong> Use density-guided tiling or TensorRT FP16/INT8 export to push speed from ~4 fps toward real-time drone deployment.</li>
+    </ul>
+  </section>
+
+  <!-- 7. References -->
+  <section id="references">
+    <h2>7. References</h2>
+    <ul class="ref-list">
+      <li>[1] P. Zhu et al., "Detection and tracking meet drones challenge," IEEE TPAMI, vol. 44, no. 11, pp. 7380–7399, 2022.</li>
+      <li>[2] G. Jocher, A. Chaurasia, and J. Qiu, "Ultralytics YOLOv8," 2023. https://github.com/ultralytics/ultralytics</li>
+      <li>[3] F. C. Akyon, S. O. Altinuc, and A. Temizel, "Slicing aided hyper inference and fine-tuning for small object detection," IEEE ICIP, pp. 966–970, 2022.</li>
+      <li>[4] J. Wang, C. Xu, W. Yang, and L. Yu, "A normalized Gaussian Wasserstein distance for tiny object detection," arXiv:2110.13389, 2021.</li>
+      <li>[5] C. Xu et al., "Detecting tiny objects in aerial images: A normalized Wasserstein distance and a new benchmark," ISPRS J. Photogramm. Remote Sens., 2022.</li>
+      <li>[6] X. Zhu et al., "TPH-YOLOv5: Improved YOLOv5 based on transformer prediction head for object detection on drone-captured scenarios," IEEE/CVF ICCVW, pp. 2778–2788, 2021.</li>
+      <li>[7] M. Kisantal et al., "Augmentation for small object detection," arXiv:1902.07296, 2019.</li>
+      <li>[8] T.-Y. Lin et al., "Feature pyramid networks for object detection," IEEE/CVF CVPR, pp. 2117–2125, 2017.</li>
+      <li>[9] Z. Zheng et al., "Distance-IoU loss: Faster and better learning for bounding box regression," AAAI, pp. 12993–13000, 2020.</li>
+      <li>[10] T.-Y. Lin et al., "Microsoft COCO: Common objects in context," ECCV, pp. 740–755, 2014.</li>
+      <li>[11] J. L. Pech-Pacheco et al., "Diatom autofocusing in brightfield microscopy: A comparative study," ICPR, vol. 3, pp. 314–317, 2000.</li>
+    </ul>
+  </section>
+
+  <!-- 8 & 9. Links + BibTeX -->
+  <section id="links">
+    <h2>8 &amp; 9. Project Resources &amp; Citation</h2>
+    <ul>
+      <li><strong>GitHub Repository:</strong> <a href="https://github.com/iamrealrushi/the-aerial-guardian" target="_blank">github.com/iamrealrushi/the-aerial-guardian</a></li>
+      <li><strong>Presentation (PPT on GitHub):</strong> <a href="https://github.com/iamrealrushi/the-aerial-guardian" target="_blank">[Update with direct PPT link]</a></li>
+      <li><strong>Demo Video &amp; PPT Screen Recording:</strong> <a href="#demo">[Update with video recording link]</a></li>
+    </ul>
+    <h3>BibTeX</h3>
+    <pre id="bibtex">@misc{waghmare2026aerialguardian,
+  title  = {Person Detection in Drone Videos: Solving Small-Object and Motion-Blurred Person Detection in Aerial Footage},
+  author = {Waghmare, Rushikesh and M, Hema and Sonker, Ishika},
+  year   = {2026},
+  note   = {EE5340: Video Analytics Mini-Project, Indian Institute of Technology Guwahati},
+  url    = {https://iamrealrushi.github.io/the-aerial-guardian/}
+}</pre>
+    <button class="copy-btn" onclick="copyBib()">Copy BibTeX</button>
+  </section>
+</main>
+
+<footer>
+  EE5340: Video Analytics · M.Tech Robotics &amp; AI · Indian Institute of Technology Guwahati
+</footer>
+
+<script>
+  // Figure 1: Person-Size Statistics
+  new Chart(document.getElementById('sizeChart'), {
+    type: 'bar',
+    data: {
+      labels: ['DET train (med 17 px)', 'DET val (med 17 px)', 'VID train /8 (med 36 px)', 'VID val /10 (med 47 px)'],
+      datasets: [{
+        label: 'Share of COCO-small boxes (<32 px side) %',
+        data: [83, 89, 39, 25],
+        backgroundColor: ['#1b365d', '#1b365d', '#d97706', '#d97706'],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: 'Percentage (%)' } } }
+    }
+  });
+
+  // Figure 3: Validation Curves (Epochs 1-26)
+  const epochs = Array.from({length: 26}, (_, i) => i + 1);
+  new Chart(document.getElementById('trainChart'), {
+    type: 'line',
+    data: {
+      labels: epochs,
+      datasets: [
+        { label: 'Precision', data: [0.584,0.657,0.627,0.705,0.686,0.716,0.732,0.732,0.751,0.744,0.745,0.769,0.763,0.777,0.777,0.773,0.784,0.775,0.776,0.782,0.774,0.792,0.790,0.787,0.783,0.789], borderColor: '#16a34a', borderDash: [5,4], tension: 0.2, pointRadius: 2 },
+        { label: 'mAP50', data: [0.430,0.510,0.503,0.565,0.565,0.590,0.607,0.619,0.633,0.620,0.621,0.650,0.648,0.659,0.681,0.674,0.676,0.674,0.688,0.699,0.685,0.701,0.699,0.696,0.693,0.700], borderColor: '#1b365d', tension: 0.2, pointRadius: 2.5 },
+        { label: 'Recall', data: [0.379,0.441,0.434,0.482,0.497,0.506,0.509,0.533,0.539,0.526,0.527,0.550,0.551,0.558,0.580,0.572,0.579,0.574,0.596,0.609,0.595,0.605,0.601,0.598,0.596,0.605], borderColor: '#dc2626', borderDash: [5,4], tension: 0.2, pointRadius: 2 },
+        { label: 'mAP50-95', data: [0.176,0.225,0.222,0.253,0.249,0.268,0.277,0.282,0.288,0.282,0.282,0.296,0.299,0.309,0.322,0.315,0.315,0.319,0.320,0.327,0.321,0.330,0.331,0.330,0.325,0.327], borderColor: '#d97706', tension: 0.2, pointRadius: 2.5 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { title: { display: true, text: 'Epoch' } },
+        y: { min: 0.15, max: 0.85, title: { display: true, text: 'Validation Score (1,200 tiles)' } }
+      }
+    }
+  });
+
+  // Figure 4: COCO Comparison (maxDets=100)
+  new Chart(document.getElementById('cocoChart'), {
+    type: 'bar',
+    data: {
+      labels: ['AP', 'AP50', 'AP75', 'AP_small', 'AP_medium', 'AP_large'],
+      datasets: [
+        { label: 'DET-val Full-Frame @1280 (Baseline)', data: [27.7, 62.2, 19.3, 24.5, 48.1, 72.5], backgroundColor: '#64748b', borderRadius: 4 },
+        { label: 'DET-val Sliced (Ours)', data: [33.6, 70.6, 26.4, 31.1, 49.8, 71.6], backgroundColor: '#1b365d', borderRadius: 4 },
+        { label: 'VID-val Sliced (Ours)', data: [25.5, 62.4, 16.1, 7.0, 31.1, 40.8], backgroundColor: '#d97706', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true, max: 85, title: { display: true, text: 'Score (%)' } } }
+    }
+  });
+
+  // Figure 5: Blur-Stratified Toggleable Chart
+  const blurData = {
+    ap50: { blurry: [78.1, 71.3, 53.1], sharp: [72.6, 62.9, 67.5], max: 90, label: 'AP50 (%)' },
+    aps:  { blurry: [33.4, 27.8, 3.1],  sharp: [32.3, 24.8, 8.7],  max: 40, label: 'AP_small (%)' }
+  };
+  const blurChart = new Chart(document.getElementById('blurChart'), {
+    type: 'bar',
+    data: {
+      labels: ['DET sliced', 'DET full-frame @1280', 'VID sliced'],
+      datasets: [
+        { label: 'Blurriest 25% frames', data: blurData.ap50.blurry, backgroundColor: '#d97706', borderRadius: 4 },
+        { label: 'Sharper 75% frames', data: blurData.ap50.sharp, backgroundColor: '#1b365d', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true, max: 90, title: { display: true, text: 'AP50 (%)' } } }
+    }
+  });
+  function setBlurMetric(key) {
+    const d = blurData[key];
+    blurChart.data.datasets[0].data = d.blurry;
+    blurChart.data.datasets[1].data = d.sharp;
+    blurChart.options.scales.y.max = d.max;
+    blurChart.options.scales.y.title.text = d.label;
+    blurChart.update();
+    document.getElementById('btnAp50').classList.toggle('active', key === 'ap50');
+    document.getElementById('btnAps').classList.toggle('active', key === 'aps');
+  }
+
+  function copyBib() {
+    navigator.clipboard.writeText(document.getElementById('bibtex').innerText);
+    const btn = document.querySelector('.copy-btn');
+    btn.innerText = 'Copied!';
+    setTimeout(() => btn.innerText = 'Copy BibTeX', 1500);
+  }
+</script>
+</body>
+</html>
