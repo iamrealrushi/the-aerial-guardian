@@ -48,6 +48,6 @@ the-aerial-guardian/
 ├── visdrone_person_detection.ipynb      # End-to-end tiling, training (YOLOv8s-P2 + NWD), & eval
 ├── visdrone_person_evaluate_only.ipynb  # Evaluation & demo video generation using saved best.pt
 ├── index.html                           # GitHub Pages project website
-├── assets/                              # Demo video (demo_out.mp4) and report figures
+├── Model output                         # Demo video (demo_out.mp4) and report figures
 ├── results/                             # metrics.json, metrics.csv, demo_detections.json, configs
-└── docs/                                # Project report (.docx/.pdf) and presentation (.pptx)
+└── report/                                # Project report (.docx/.pdf) and presentation (.pptx)
