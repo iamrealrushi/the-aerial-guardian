@@ -1,0 +1,23 @@
+{
+ "QUICK_TEST": false,
+ "MODEL_SIZE": "s",
+ "TILE": 512,
+ "OVERLAP": 0.25,
+ "IMGSZ": 768,
+ "EPOCHS": 30,
+ "BATCH": 8,
+ "MAX_TRAIN_TILES": 16000,
+ "EMPTY_TILE_FRAC": 0.1,
+ "COPY_PASTE_PROB": 0.3,
+ "NWD_WEIGHT": 0.5,
+ "NWD_C": 12.8,
+ "USE_VID_TRAIN": true,
+ "VID_TRAIN_STRIDE": 8,
+ "VID_EVAL_STRIDE": 10,
+ "EVAL_MAX_IMAGES": null,
+ "WORKERS": 2,
+ "REBUILD_TILES": false,
+ "DRIVE_FOLDER_NAME": "visdrone_person",
+ "DATA_FOLDER_NAME": "visdrone_data",
+ "SEED": 0
+}

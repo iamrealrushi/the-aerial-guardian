@@ -1,0 +1,13 @@
+dataset,subset,AP,AP50,AP75,AP_small,AP_medium,AP_large
+DET_sliced,all frames  (maxDets=100, standard COCO),0.3361,0.7064,0.2640,0.3111,0.4983,0.7163
+DET_sliced,all frames  (maxDets=500, crowded scenes),-1.0000,0.7375,0.2706,0.3246,0.5063,0.7160
+DET_sliced,blurriest 25% of frames,-1.0000,0.7813,0.2941,0.3337,0.5202,0.7016
+DET_sliced,sharper 75% of frames,-1.0000,0.7264,0.2647,0.3230,0.5001,0.7553
+DET_fullframe_1280,all frames  (maxDets=100, standard COCO),0.2767,0.6225,0.1935,0.2453,0.4812,0.7246
+DET_fullframe_1280,all frames  (maxDets=500, crowded scenes),-1.0000,0.6466,0.1966,0.2538,0.4894,0.7243
+DET_fullframe_1280,blurriest 25% of frames,-1.0000,0.7134,0.2360,0.2775,0.5121,0.7194
+DET_fullframe_1280,sharper 75% of frames,-1.0000,0.6285,0.1867,0.2484,0.4785,0.7630
+VID_sliced,all frames  (maxDets=100, standard COCO),0.2554,0.6240,0.1607,0.0701,0.3112,0.4075
+VID_sliced,all frames  (maxDets=500, crowded scenes),-1.0000,0.6300,0.1620,0.0716,0.3177,0.4130
+VID_sliced,blurriest 25% of frames,-1.0000,0.5313,0.1065,0.0305,0.2432,0.4034
+VID_sliced,sharper 75% of frames,-1.0000,0.6746,0.1848,0.0865,0.3546,0.4190
